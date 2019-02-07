@@ -1,0 +1,27 @@
+---
+- name: "Get Current Elastic version"
+  uri:
+    url: "http://{{es_host}}:{{es_http_port}}/"
+    body_format: json
+  changed_when: false
+  register: nodeinfo
+  ignore_errors: yes
+
+- name: "Check Cluster color"
+  uri:
+    url: "http://{{es_host}}:{{es_http_port}}/_cluster/health"
+    body_format: json
+  register: cluster_status
+  changed_when: false
+  when: nodeinfo.failed == false
+  failed_when: cluster_status.json.status != "green"
+
+- name: "reset settings for shard routing exclusion"
+  include_tasks: reset_transient.yml
+  when: (nodeinfo.failed != true) and (nodeinfo.json.version.number != es_version)
+
+- name: "Migrate Node Data"
+  include_tasks: migrate_node.yml
+  when: (nodeinfo.failed != true) and (nodeinfo.json.version.number != es_version)
+
+

@@ -1,0 +1,14 @@
+---
+- name: "Exclude node from routing"
+  uri:
+    url: "http://{{es_host}}:{{es_http_port}}/_cluster/settings"
+    method: "PUT"
+    body: "{\"transient\" :{\"cluster.routing.allocation.exclude._name\": \"{{nodeinfo.json.name}}\"}}"
+
+- name: "wait for end of urgents tasks (data migration)"
+  shell: "curl http://{{es_host}}:{{es_http_port}}/_tasks?"
+  register: migrationstatus
+  while: migrationstatus.stdout != "0"
+
+- name: "reset settings for shard routing exclusion"
+  include_taks: reset_transient.yml
