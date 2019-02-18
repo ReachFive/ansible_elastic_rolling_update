@@ -16,10 +16,6 @@
   when: nodeinfo.failed == false
   failed_when: cluster_status.json.status != "green"
 
-- name: "reset settings for shard routing exclusion"
-  include_tasks: reset_transient.yml
-  when: (nodeinfo.failed != true) and (nodeinfo.json.version.number != es_version)
-
 - name: "Migrate Node Data"
   include_tasks: migrate_node.yml
   when: (nodeinfo.failed != true) and (nodeinfo.json.version.number != es_version)

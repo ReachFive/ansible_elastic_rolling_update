@@ -1,6 +1,5 @@
 ---
-name: "reset settings for shard routing exclusion"
-  tags: cleanup_transient
+- name: reset transient
   uri:
     url: "http://{{es_host}}:{{es_http_port}}/_cluster/settings"
     method: "PUT"
