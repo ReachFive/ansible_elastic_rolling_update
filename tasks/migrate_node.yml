@@ -3,10 +3,18 @@
   uri:
     url: "http://{{es_host}}:{{es_http_port}}/_cluster/settings"
     method: "PUT"
-    body: "{\"transient\" :{\"cluster.routing.allocation.exclude._name\": \"{{nodeinfo.json.name}}\"}}"
+    body: '{"transient" :{"cluster.routing.allocation.exclude._name": "{{nodeinfo.json.name}}"}}'
+    body_format: json
   notify: reset transient
+
+- name: unhold elastic package
+  become: yes
+  dpkg_selections:
+    name: "elasticsearch"
+    selection: "deinstall"
 
 - name: "wait for end of Relocating"
   script: ../assets/check_relocating.py
   register: migrationstatus
-  while: migrationstatus.stdout != "NOT RELOCATING"
+  until: migrationstatus.stdout == "NOT RELOCATING"
+  retries: 1200
