@@ -1,11 +1,20 @@
 ---
-- name: "Exclude node from routing"
+
+- name: wait for cluster green
+  script: ../assets/cluster_color.py
+  register: cluster_color
+  until: cluster_color.stdout == "green"
+  when: nodeinfo.failed == false
+  retries: 1200
+  changed_when: false
+  tags: always
+
+- name: Exclude node from routing
   uri:
     url: "http://{{es_host}}:{{es_http_port}}/_cluster/settings"
     method: "PUT"
     body: '{"transient" :{"cluster.routing.allocation.exclude._name": "{{nodeinfo.json.name}}"}}'
     body_format: json
-  notify: reset transient
 
 - name: unhold elastic package
   become: yes
@@ -13,7 +22,13 @@
     name: "elasticsearch"
     selection: "deinstall"
 
-- name: "wait for end of Relocating"
+- name: set fact for post step
+  set_fact: upgrade_elastic=true
+
+- name: planning reinstall plugins
+  set_fact: es_plugins_reinstall=true
+
+- name: wait for end of Relocating
   script: ../assets/check_relocating.py
   register: migrationstatus
   until: migrationstatus.stdout == "NOT RELOCATING"

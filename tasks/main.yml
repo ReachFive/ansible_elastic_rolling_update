@@ -6,18 +6,14 @@
   changed_when: false
   register: nodeinfo
   ignore_errors: yes
+  tags: always
 
-- name: "Check Cluster color"
-  uri:
-    url: "http://{{es_host}}:{{es_http_port}}/_cluster/health"
-    body_format: json
-  register: cluster_status
-  changed_when: false
-  when: nodeinfo.failed == false
-  failed_when: cluster_status.json.status != "green"
+- name: "Post migration tasks"
+  include_tasks: post_steps.yml
+  tags: post_steps
+  when: upgrade_elastic
 
-- name: "Migrate Node Data"
-  include_tasks: migrate_node.yml
+- name: "Pre migration tasks"
+  include_tasks: pre_steps.yml
+  tags: pre_steps
   when: (nodeinfo.failed != true) and (nodeinfo.json.version.number != es_version)
-
-

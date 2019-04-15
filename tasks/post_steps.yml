@@ -1,0 +1,23 @@
+---
+
+- name: "Get cluster health"
+  uri:
+    url: "http://{{es_host}}:{{es_http_port}}/_cluster/health"
+    body_format: json
+  changed_when: false
+  register: cluster_health
+
+- name: rejoin cluster
+  script: ../assets/restart_elastic.py
+  become: true
+  register: looprestart
+  until: looprestart.stdout == awaited_cluster_nodes
+  when: cluster_health.json.number_of_nodes != awaited_cluster_nodes
+  retries: 500
+
+- name: reset transient
+  uri:
+    url: "http://{{es_host}}:{{es_http_port}}/_cluster/settings"
+    method: "PUT"
+    body: '{"transient" :{"cluster.routing.allocation.exclude._name": null}}'
+    body_format: json
