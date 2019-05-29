@@ -1,4 +1,9 @@
 ---
+- name: ensure deps are install
+  become: true
+  package:
+    name: "python3-requests"
+    state: "latest"
 
 - name: wait for cluster green
   script: ../assets/cluster_color.py
