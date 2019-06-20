@@ -1,4 +1,11 @@
 ---
+
+- name: ensure deps are installed
+  become: true
+  package:
+    name: "python3-requests"
+    state: "latest"
+
 - name: "Get Current Elastic version"
   uri:
     url: "http://{{es_host}}:{{es_http_port}}/"
@@ -6,14 +13,28 @@
   changed_when: false
   register: nodeinfo
   ignore_errors: yes
-  tags: always
+
+- name: "wait for cluster green"
+  script: ../assets/cluster_color.py
+  register: cluster_color
+  until: cluster_color.stdout == "green"
+  when: cluster_info and (cluster_info.json.status == "green")
+  retries: 1200
+  changed_when: false
+
+- name: "get cluster status"
+  uri:
+    url: "http://{{es_host}}:{{es_http_port}}/_cluster/health"
+    body_format: json
+  changed_when: false
+  register: cluster_info
+  when: (nodeinfo.failed != true)
+
 
 - name: "Post migration tasks"
   include_tasks: post_steps.yml
-  tags: post_steps
   when: upgrade_elastic
 
 - name: "Pre migration tasks"
   include_tasks: pre_steps.yml
-  tags: pre_steps
   when: (nodeinfo.failed != true) and (nodeinfo.json.version.number != es_version)

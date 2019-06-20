@@ -1,18 +1,4 @@
 ---
-- name: ensure deps are install
-  become: true
-  package:
-    name: "python3-requests"
-    state: "latest"
-
-- name: wait for cluster green
-  script: ../assets/cluster_color.py
-  register: cluster_color
-  until: cluster_color.stdout == "green"
-  when: nodeinfo.failed == false
-  retries: 1200
-  changed_when: false
-  tags: always
 
 - name: Exclude node from routing
   uri:
