@@ -18,7 +18,7 @@
   script: ../assets/cluster_color.py
   register: cluster_color
   until: cluster_color.stdout == "green"
-  when: cluster_info and (cluster_info.json.status == "green")
+  when: nodeinfo.failed != true
   retries: 1200
   changed_when: false
 
